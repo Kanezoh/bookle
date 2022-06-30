@@ -1,3 +1,3 @@
-FROM node:18
+FROM node:14
 WORKDIR /workspace
 
