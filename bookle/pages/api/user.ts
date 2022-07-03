@@ -6,13 +6,15 @@ const admin = require('firebase-admin');
 const serviceAccount = require('../../bookle-a4c53-b8eb155e4efa.json');
 
 
-type Data = {
-  name: string
+type User = {
+  id: string,
+  name?: string,
+  imgUrl?: string,
 }
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<any>
+  res: NextApiResponse<User[]>
 ) {
   //　initializeAppを複数回呼び出さないようにする
   if (admin.apps.length === 0) {
@@ -24,9 +26,8 @@ export default async function handler(
   const db = getFirestore();
   const citiesRef = db.collection('users');
   const snapshot = await citiesRef.get();
-  const docs: any[] = []
+  const docs: User[] = []
   snapshot.forEach((doc: any) => {
-    console.log(doc.id, '=>', doc.data());
     docs.push(doc.data())
   });
   res.status(200).json(docs)
