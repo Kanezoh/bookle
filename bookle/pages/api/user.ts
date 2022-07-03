@@ -1,5 +1,6 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { CreateUserDto } from './auth/[...nextauth]';
 const { cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const admin = require('firebase-admin');
@@ -24,11 +25,18 @@ export default async function handler(
   }
 
   const db = getFirestore();
-  const citiesRef = db.collection('users');
-  const snapshot = await citiesRef.get();
-  const docs: User[] = []
-  snapshot.forEach((doc: any) => {
-    docs.push(doc.data())
-  });
-  res.status(200).json(docs)
+  if (req.method === 'GET') {
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.get();
+    const docs: User[] = []
+    snapshot.forEach((doc: any) => {
+      docs.push(doc.data())
+    });
+    res.status(200).json(docs)
+  } else if (req.method === 'POST') {
+    const createUserDto = req.body as CreateUserDto 
+    const userRef = db.collection('users').doc(createUserDto.id);
+    const res = await userRef.set(createUserDto, { merge: true });
+    res.status(200)
+  }
 }
