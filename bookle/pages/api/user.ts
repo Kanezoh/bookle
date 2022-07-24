@@ -1,11 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { CreateUserDto } from './auth/[...nextauth]';
-const { cert } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
-const admin = require('firebase-admin');
-const serviceAccount = require('../../bookle-a4c53-b8eb155e4efa.json');
-
+import clientPromise from '../../util/mongodb'
+import { MongoClient } from 'mongodb';
 
 type User = {
   id: string,
@@ -15,28 +12,19 @@ type User = {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<User[]>
+  res: NextApiResponse<any>
 ) {
-  //　initializeAppを複数回呼び出さないようにする
-  if (admin.apps.length === 0) {
-    admin.initializeApp({
-      credential: cert(serviceAccount),
-    });
-  }
-
-  const db = getFirestore();
+  const client: MongoClient = await clientPromise
   if (req.method === 'GET') {
-    const usersRef = db.collection('users');
-    const snapshot = await usersRef.get();
-    const docs: User[] = []
-    snapshot.forEach((doc: any) => {
-      docs.push(doc.data())
-    });
+    const db = client.db("bookle")
+    const users = db.collection('users');
+    const docs = await users.find().toArray()
+    console.log(docs)
     res.status(200).json(docs)
   } else if (req.method === 'POST') {
-    const createUserDto = req.body as CreateUserDto 
-    const userRef = db.collection('users').doc(createUserDto.id);
-    const res = await userRef.set(createUserDto, { merge: true });
-    res.status(200)
+    // const createUserDto = req.body as CreateUserDto 
+    // const userRef = db.collection('users').doc(createUserDto.id);
+    // const res = await userRef.set(createUserDto, { merge: true });
+    // res.status(200)
   }
 }
